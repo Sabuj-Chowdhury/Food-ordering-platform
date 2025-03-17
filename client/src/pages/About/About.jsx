@@ -1,3 +1,5 @@
+import { Helmet } from "react-helmet";
+
 const About = () => {
   return (
     <div className=" bg-[#FAF3E0] text-[#2E2E2E] inter flex flex-col items-center px-0 py-5 overflow-hidden">
