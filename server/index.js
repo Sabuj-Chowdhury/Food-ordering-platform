@@ -60,6 +60,31 @@ app.get("/", (req, res) => {
   res.send("Hello from FoodZone Server..");
 });
 
+// admin verify middleware
+const verifyAdmin = async (req, res, next) => {
+  try {
+    const email = req.decoded.email;
+
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("role")
+      .eq("email", email)
+      .single();
+
+    if (error || !user) {
+      return res.status(404).send({ message: "User not found!" });
+    }
+
+    const isAdmin = user.role === "admin";
+    if (!isAdmin) {
+      return res.status(403).send({ message: "forbidden access!" });
+    }
+    next();
+  } catch (error) {
+    res.status(500).send({ message: "Error verifying admin status" });
+  }
+};
+
 // User registration endpoint
 app.post("/users", async (req, res) => {
   try {
@@ -112,6 +137,40 @@ app.post("/users", async (req, res) => {
   }
 });
 
+// check if a user is admin
+app.get("/user/admin/:email", verifyToken, async (req, res) => {
+  try {
+    const email = req.params.email;
+
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("role")
+      .eq("email", email)
+      .single();
+
+    if (error) {
+      return res.status(404).json({
+        success: false,
+        admin: false,
+        message: "User not found",
+      });
+    }
+
+    const isAdmin = user?.role === "admin";
+    res.json({
+      success: true,
+      admin: isAdmin,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      admin: false,
+      message: "Error checking admin status",
+      error: error.message,
+    });
+  }
+});
+
 // Get all users endpoint with pagination
 app.get("/users", async (req, res) => {
   try {
@@ -140,6 +199,41 @@ app.get("/users", async (req, res) => {
       message: "Error fetching users",
       error: error.message,
       success: false,
+    });
+  }
+});
+
+// Get single user data
+app.get("/users/:email", verifyToken, async (req, res) => {
+  try {
+    const { email } = req.params;
+    console.log("Fetching user data for:", email); // Debug log
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (error) {
+      console.log("Supabase error:", error); // Debug log
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    console.log("Found user data:", data); // Debug log
+    res.status(200).json({
+      success: true,
+      user: data
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching user data",
+      error: error.message
     });
   }
 });
