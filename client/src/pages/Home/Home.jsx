@@ -1,11 +1,13 @@
-import { Helmet } from "react-helmet";
+import Hero from "./components/Hero";
+import Services from "./components/Services";
 
 const Home = () => {
   return (
     <div>
-      <div className="">
-        <p>Home</p>
-      </div>
+      {/* banner/Hero */}
+      <Hero />
+      {/* services  */}
+      <Services />
     </div>
   );
 };
