@@ -55,37 +55,27 @@ const AuthProvider = ({ children }) => {
 
   // observer from firebase
   // onAuthStateChange
+  // Inside onAuthStateChanged
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-
       if (currentUser) {
-        // Get JWT token first
-        const userInfo = { email: currentUser?.email };
+        // Get JWT token
         try {
-          const res = await axiosPublic.post("/jwt", userInfo);
-          //   console.log("JWT Response:", res.data);
-          if (res.data.token) {
-            localStorage.setItem("token", res.data.token);
-          }
-
-          // Only save user data if we have displayName and photoURL
-          if (currentUser?.displayName && currentUser.photoURL) {
-            const userData = {
-              email: currentUser?.email,
-              displayName: currentUser?.displayName,
-              photoURL: currentUser.photoURL,
-            };
-            await axiosPublic.post("/users", userData);
+          const response = await axiosPublic.post("/jwt", {
+            email: currentUser.email
+          });
+          console.log("JWT Response:", response.data); // Debug log
+          if (response.data.token) {
+            localStorage.setItem("token", response.data.token);
           }
         } catch (error) {
-          console.error("Error:", error);
+          console.error("JWT Error:", error);
           localStorage.removeItem("token");
         }
       } else {
         localStorage.removeItem("token");
       }
-
       setLoading(false);
     });
 

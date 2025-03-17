@@ -6,6 +6,10 @@ import Register from "../pages/Register/Register";
 import Restaurants from "../pages/Restaurant/Restaurants";
 import About from "../pages/About/About";
 import Contact from "../pages/Contact/Contact";
+import PrivateRoute from "./PrivateRoute";
+import Dashboard from "../layouts/Dashboard";
+import DashboardHome from "../components/DashboardHome/DashboardHome";
+import Profile from "../components/Profile/Profile";
 
 const router = createBrowserRouter([
   {
@@ -37,6 +41,32 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />,
+  },
+  {
+    path: "/dashboard",
+    element: (
+      <PrivateRoute>
+        <Dashboard />
+      </PrivateRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <PrivateRoute>
+            <DashboardHome />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "profile",
+        element: (
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        ),
+      },
+    ],
   },
 ]);
 
