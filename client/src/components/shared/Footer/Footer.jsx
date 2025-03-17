@@ -2,8 +2,8 @@ import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#121212] text-white py-8 mt-16 text-center">
-      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-6">
+    <footer className="bg-[#121212] text-white py-8 text-center">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center px-6">
         <div>
           <h2 className="text-2xl font-bold text-[#FF4B2B]">FoodZone</h2>
           <p className="text-gray-400 mt-2">
