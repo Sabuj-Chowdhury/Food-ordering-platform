@@ -62,15 +62,34 @@ const AuthProvider = ({ children }) => {
       if (currentUser) {
         // Get JWT token
         try {
+          // First, get the JWT token
           const response = await axiosPublic.post("/jwt", {
-            email: currentUser.email
+            email: currentUser.email,
+            uid: currentUser.uid
           });
-          console.log("JWT Response:", response.data); // Debug log
+          
           if (response.data.token) {
             localStorage.setItem("token", response.data.token);
+            
+            // After token is set, save user information
+            const userInfo = {
+              email: currentUser.email,
+              displayName: currentUser.displayName,
+              photoURL: currentUser.photoURL
+            };
+            
+            try {
+              await axiosPublic.post("/users", userInfo);
+            } catch (userError) {
+              console.error("Error saving user info:", userError);
+              // Don't remove token if user save fails
+            }
+          } else {
+            console.error("No token received from server");
+            localStorage.removeItem("token");
           }
         } catch (error) {
-          console.error("JWT Error:", error);
+          console.error("JWT Error:", error.response?.data || error.message);
           localStorage.removeItem("token");
         }
       } else {

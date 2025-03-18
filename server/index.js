@@ -46,6 +46,7 @@ app.post("/jwt", async (req, res) => {
     const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
       expiresIn: "24h",
     });
+    console.log("Generated token:", token); // Add this log
     res.send({ token });
   } catch (error) {
     console.error("Token generation error:", error);
@@ -89,6 +90,7 @@ const verifyAdmin = async (req, res, next) => {
 app.post("/users", async (req, res) => {
   try {
     const userData = req.body;
+    console.log("Received user data:", userData); // Add this debug log
 
     // Check if user already exists
     const { data: existingUser } = await supabase
@@ -104,7 +106,7 @@ app.post("/users", async (req, res) => {
       });
     }
 
-    // Insert new user
+    // Insert new user with error logging
     const { data, error } = await supabase
       .from("users")
       .insert([
@@ -113,14 +115,17 @@ app.post("/users", async (req, res) => {
           name: userData.displayName,
           photo: userData.photoURL,
           role: "user",
-          created_at: new Date(),
-          last_sign_in: new Date(),
+          created_at: new Date().toISOString(), // Fix the date format
+          last_sign_in: new Date().toISOString(), // Fix the date format
         },
       ])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase insertion error:", error); // Add detailed error logging
+      throw error;
+    }
 
     res.status(201).json({
       message: "User created successfully",
@@ -219,21 +224,21 @@ app.get("/users/:email", verifyToken, async (req, res) => {
       console.log("Supabase error:", error); // Debug log
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "User not found",
       });
     }
 
     console.log("Found user data:", data); // Debug log
     res.status(200).json({
       success: true,
-      user: data
+      user: data,
     });
   } catch (error) {
     console.error("Server error:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching user data",
-      error: error.message
+      error: error.message,
     });
   }
 });
