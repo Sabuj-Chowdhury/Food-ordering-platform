@@ -59,25 +59,25 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
+      if (currentUser?.displayName && currentUser.photoURL) {
         // Get JWT token
         try {
           // First, get the JWT token
           const response = await axiosPublic.post("/jwt", {
             email: currentUser.email,
-            uid: currentUser.uid
+            uid: currentUser.uid,
           });
-          
+
           if (response.data.token) {
             localStorage.setItem("token", response.data.token);
-            
+
             // After token is set, save user information
             const userInfo = {
               email: currentUser.email,
               displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL
+              photoURL: currentUser.photoURL,
             };
-            
+
             try {
               await axiosPublic.post("/users", userInfo);
             } catch (userError) {
