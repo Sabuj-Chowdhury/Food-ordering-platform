@@ -243,6 +243,49 @@ app.get("/users/:email", verifyToken, async (req, res) => {
   }
 });
 
+// Update user profile
+// Update user profile - make sure this matches exactly
+app.patch("/users/:email", verifyToken, async (req, res) => {
+  try {
+    const { email } = req.params;
+    const updateData = req.body;
+
+    const { data, error } = await supabase
+      .from("users")
+      .update({
+        name: updateData.name,
+        photo: updateData.photo,
+        phone: updateData.phone,
+        address: updateData.address,
+        updated_at: new Date().toISOString()
+      })
+      .eq("email", email)
+      .select();
+
+    if (error) {
+      console.error("Update error:", error);
+      return res.status(400).json({
+        success: false,
+        message: "Failed to update user",
+        error: error.message
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      user: data[0]
+    });
+  } catch (error) {
+    console.error("Server error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating user",
+      error: error.message
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log(`FoodZone is running on port ${port}`);
 });
