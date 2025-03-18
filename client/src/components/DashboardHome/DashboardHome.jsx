@@ -21,7 +21,7 @@ const DashboardHome = () => {
             <img
               src={user.photoURL}
               alt="profile"
-              className="w-16 h-16 rounded-full border-2 border-white"
+              className="w-16 h-16 rounded-full border-2 border-white object-cover"
             />
           ) : (
             <FaUserCircle className="w-16 h-16 text-white" />
@@ -54,7 +54,9 @@ const DashboardHome = () => {
                 <h3 className="text-xl font-semibold text-gray-800 poppins">
                   My Profile
                 </h3>
-                <p className="text-gray-500 inter">View and edit your information</p>
+                <p className="text-gray-500 inter">
+                  View and edit your information
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4 border-t pt-4">

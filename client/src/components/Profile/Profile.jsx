@@ -4,19 +4,35 @@ import useAxiosSecure from "../../hooks/useAxiosSecure";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
 import { MdEmail, MdLocationOn, MdPhone } from "react-icons/md";
 import { FaUserEdit } from "react-icons/fa";
+import { useState } from "react";
+import UserUpdateModal from "../Modals/UserUpdateModal";
 
 const Profile = () => {
   const { user } = useAuth();
   const axiosSecure = useAxiosSecure();
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
 
   // Fetch user data
-  const { data: profile, isLoading } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["profile", user?.email],
     queryFn: async () => {
       const { data } = await axiosSecure.get(`/users/${user.email}`);
       return data.user;
     },
   });
+  // console.log(profile);
+
+  const handleOpenModal = () => {
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsUpdateModalOpen(false);
+  };
 
   // Destructure additional fields from profile
   const { email, photo, name, phone, address, role, createdAt } = profile || {};
@@ -34,7 +50,7 @@ const Profile = () => {
         {/* Section Title */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 playfair-display mb-2">
-            My Profile Details
+            Profile Details
           </h1>
           <p className="text-gray-600 inter">
             Manage your personal information and preferences
@@ -92,12 +108,23 @@ const Profile = () => {
             </div>
 
             {/* Update Profile Button */}
-            <button className="mt-6 flex items-center gap-2 bg-[#FF4B2B] text-white py-3 px-6 rounded-md text-lg poppins hover:bg-[#FF6F3C] transition-all">
+            <button
+              onClick={handleOpenModal}
+              className="mt-6 flex items-center gap-2 bg-[#FF4B2B] text-white py-3 px-6 rounded-md text-lg poppins hover:bg-[#FF6F3C] transition-all"
+            >
               <FaUserEdit /> Update Profile
             </button>
           </div>
         </div>
       </div>
+
+      {/* Update Profile Modal */}
+      <UserUpdateModal
+        open={isUpdateModalOpen}
+        handleClose={handleCloseModal}
+        currentUser={profile}
+        refetch={refetch}
+      />
     </div>
   );
 };
