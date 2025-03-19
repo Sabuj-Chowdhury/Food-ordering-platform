@@ -46,7 +46,7 @@ app.post("/jwt", async (req, res) => {
     const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
       expiresIn: "24h",
     });
-    console.log("Generated token:", token); // Add this log
+    // console.log("Generated token:", token); // Add this log
     res.send({ token });
   } catch (error) {
     console.error("Token generation error:", error);
@@ -90,7 +90,7 @@ const verifyAdmin = async (req, res, next) => {
 app.post("/users", async (req, res) => {
   try {
     const userData = req.body;
-    console.log("Received user data:", userData); // Add this debug log
+    // console.log("Received user data:", userData); // Add this debug log
 
     // Check if user already exists
     const { data: existingUser } = await supabase
@@ -244,7 +244,6 @@ app.get("/users/:email", verifyToken, async (req, res) => {
 });
 
 // Update user profile
-// Update user profile - make sure this matches exactly
 app.patch("/users/:email", verifyToken, async (req, res) => {
   try {
     const { email } = req.params;
@@ -257,31 +256,31 @@ app.patch("/users/:email", verifyToken, async (req, res) => {
         photo: updateData.photo,
         phone: updateData.phone,
         address: updateData.address,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq("email", email)
-      .select();
+      .select("*");
 
     if (error) {
       console.error("Update error:", error);
       return res.status(400).json({
         success: false,
         message: "Failed to update user",
-        error: error.message
+        error: error.message,
       });
     }
 
     res.status(200).json({
       success: true,
       message: "User updated successfully",
-      user: data[0]
+      user: data[0],
     });
   } catch (error) {
     console.error("Server error:", error);
     res.status(500).json({
       success: false,
       message: "Error updating user",
-      error: error.message
+      error: error.message,
     });
   }
 });
