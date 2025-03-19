@@ -10,6 +10,8 @@ import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../layouts/Dashboard";
 import DashboardHome from "../components/DashboardHome/DashboardHome";
 import Profile from "../components/Profile/Profile";
+import AdminRoutes from "./AdminRoutes";
+import ManageUsers from "../pages/Admin/ManageUsers/ManageUsers";
 
 const router = createBrowserRouter([
   {
@@ -63,6 +65,16 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <Profile />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "manage-users",
+        element: (
+          <PrivateRoute>
+            <AdminRoutes>
+              <ManageUsers />
+            </AdminRoutes>
           </PrivateRoute>
         ),
       },
