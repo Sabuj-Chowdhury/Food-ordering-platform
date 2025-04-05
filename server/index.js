@@ -177,7 +177,7 @@ app.get("/user/admin/:email", verifyToken, async (req, res) => {
 });
 
 // Get all users endpoint with pagination
-app.get("/users", async (req, res) => {
+app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;

@@ -1,4 +1,5 @@
 import Hero from "./components/Hero";
+import PopularItems from "./components/PopularItems";
 import Services from "./components/Services";
 
 const Home = () => {
@@ -6,6 +7,8 @@ const Home = () => {
     <div>
       {/* banner/Hero */}
       <Hero />
+      {/* popular items */}
+      <PopularItems />
       {/* services  */}
       <Services />
     </div>
