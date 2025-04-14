@@ -405,6 +405,27 @@ app.delete("/restaurants/:id", verifyToken, async (req, res) => {
   });
 });
 
+// Get all restaurants (public view)
+app.get("/api/public/restaurants", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("id, name, image, cuisine, address");
+
+    if (error) {
+      console.error("🔥 Supabase error:", error.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch restaurants." });
+    }
+
+    res.status(200).json(data);
+  } catch (err) {
+    console.error("🔥 Server error:", err.message);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+});
+
 // Add a menu in the database
 app.post("/menu", verifyToken, async (req, res) => {
   const {
