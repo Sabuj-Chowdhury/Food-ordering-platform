@@ -5,6 +5,8 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../../components/LoadingSpinner/LoadingSpinner";
 import { FaTrash, FaEdit } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const ManageMenu = () => {
   const axiosSecure = useAxiosSecure();
@@ -25,19 +27,52 @@ const ManageMenu = () => {
   });
 
   const handleDelete = async (id) => {
-    setDeletingId(id);
-    try {
-      const res = await axiosSecure.delete(`/menu/${id}`);
-      if (res.data.success) {
-        toast.success("Menu item deleted");
-        refetch();
-      } else {
-        toast.error("Failed to delete");
+    const swalWithTailwindButtons = Swal.mixin({
+      customClass: {
+        actions: "flex justify-center gap-4 mt-4",
+        confirmButton:
+          "bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded",
+        cancelButton:
+          "bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded",
+      },
+      buttonsStyling: false,
+    });
+
+    const result = await swalWithTailwindButtons.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, cancel!",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      setDeletingId(id);
+      try {
+        const res = await axiosSecure.delete(`/menu/${id}`);
+        if (res.data.success) {
+          await swalWithTailwindButtons.fire({
+            title: "Deleted!",
+            text: "Menu item has been deleted.",
+            icon: "success",
+          });
+          refetch();
+        } else {
+          toast.error("Failed to delete");
+        }
+      } catch (err) {
+        toast.error("Something went wrong");
+      } finally {
+        setDeletingId(null);
       }
-    } catch (err) {
-      toast.error("Something went wrong");
-    } finally {
-      setDeletingId(null);
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+      swalWithTailwindButtons.fire({
+        title: "Cancelled",
+        text: "Your menu item is safe 😊",
+        icon: "error",
+      });
     }
   };
 
@@ -86,10 +121,13 @@ const ManageMenu = () => {
                   <td className="p-4 capitalize">{item.category}</td>
                   <td className="p-4 font-medium">৳ {item.price}</td>
                   <td className="p-4 text-center flex flex-col sm:flex-row justify-center gap-2">
-                    <button className="bg-[#FF6F3C] hover:bg-[#e95b2e] text-white px-3 py-2 rounded-md font-semibold flex items-center gap-2">
+                    <Link
+                      to={`/dashboard/update-menu/${item.id}`}
+                      className="bg-[#FF6F3C] hover:bg-[#e95b2e] text-white px-3 py-2 rounded-md font-semibold flex items-center gap-2"
+                    >
                       <FaEdit />
                       Edit
-                    </button>
+                    </Link>
                     <button
                       disabled={deletingId === item.id}
                       onClick={() => handleDelete(item.id)}

@@ -20,6 +20,7 @@ import AddMenu from "../pages/Seller/AddMenu/AddMenu";
 import ManageMenu from "../pages/Seller/ManageMenu/ManageMenu";
 import ManageOrders from "../pages/Seller/ManageOrders/ManageOrders";
 import MyRestaurant from "../pages/Seller/MyRestaurant/MyRestaurant";
+import UpdateMenu from "../pages/Seller/UpdateMenu/UpdateMenu";
 
 const router = createBrowserRouter([
   {
@@ -122,6 +123,16 @@ const router = createBrowserRouter([
           <PrivateRoute>
             <SellerRoute>
               <ManageMenu />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "update-menu/:id",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <UpdateMenu />
             </SellerRoute>
           </PrivateRoute>
         ),

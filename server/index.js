@@ -242,7 +242,7 @@ app.get("/users/role/:email", verifyToken, async (req, res) => {
 });
 
 // manage user status
-app.patch("/users/status/:email", async (req, res) => {
+app.patch("/users/status/:email", verifyToken, async (req, res) => {
   const email = req.params.email;
 
   const { data: user } = await supabase
@@ -406,7 +406,7 @@ app.delete("/restaurants/:id", verifyToken, async (req, res) => {
 });
 
 // Add a menu in the database
-app.post("/menu", async (req, res) => {
+app.post("/menu", verifyToken, async (req, res) => {
   const {
     name,
     description,
@@ -453,7 +453,7 @@ app.post("/menu", async (req, res) => {
 
 // get all menu items for that user
 // Get menu items by owner email and include restaurant name
-app.get("/menu/:email", async (req, res) => {
+app.get("/menu/:email", verifyToken, async (req, res) => {
   const { email } = req.params;
 
   const { data, error } = await supabase
@@ -489,6 +489,42 @@ app.get("/menu/:email", async (req, res) => {
   }));
 
   res.json(formatted);
+});
+
+// Get a single menu item
+app.get("/menu/item/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from("menu")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(200).json(data);
+});
+
+// Update menu item
+app.patch("/menu/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const { error } = await supabase.from("menu").update(updateData).eq("id", id);
+  if (error)
+    return res.status(500).json({ success: false, message: error.message });
+  res.json({ success: true });
+});
+
+// DELETE menu item by ID
+app.delete("/menu/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase.from("menu").delete().eq("id", id);
+
+  if (error) {
+    console.error("❌ Delete menu error:", error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+
+  res.json({ success: true, message: "Menu item deleted successfully." });
 });
 
 app.listen(port, () => {
