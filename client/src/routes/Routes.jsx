@@ -10,8 +10,10 @@ import PrivateRoute from "./PrivateRoute";
 import Dashboard from "../layouts/Dashboard";
 import DashboardHome from "../components/DashboardHome/DashboardHome";
 import Profile from "../components/Profile/Profile";
-import AdminRoutes from "./AdminRoutes";
 import ManageUsers from "../pages/Admin/ManageUsers/ManageUsers";
+import RequestPage from "../pages/Users/RequestPage/RequestPage";
+import AdminRoute from "./AdminRoute";
+import UserRoute from "./UserRoute";
 
 const router = createBrowserRouter([
   {
@@ -72,9 +74,19 @@ const router = createBrowserRouter([
         path: "manage-users",
         element: (
           <PrivateRoute>
-            <AdminRoutes>
+            <AdminRoute>
               <ManageUsers />
-            </AdminRoutes>
+            </AdminRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "request",
+        element: (
+          <PrivateRoute>
+            <UserRoute>
+              <RequestPage />
+            </UserRoute>
           </PrivateRoute>
         ),
       },

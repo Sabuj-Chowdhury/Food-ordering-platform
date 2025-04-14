@@ -43,6 +43,13 @@ const Profile = () => {
     : new Date().getFullYear();
 
   if (isLoading) return <LoadingSpinner />;
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500 text-xl">
+        Failed to load profile. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF3E0] flex items-center justify-center py-12 px-6">

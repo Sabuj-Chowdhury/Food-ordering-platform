@@ -53,16 +53,12 @@ const AuthProvider = ({ children }) => {
     return signOut(auth);
   };
 
-  // observer from firebase
-  // onAuthStateChange
-  // Inside onAuthStateChanged
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser?.displayName && currentUser.photoURL) {
-        // Get JWT token
+
+      if (currentUser?.email) {
         try {
-          // First, get the JWT token
           const response = await axiosPublic.post("/jwt", {
             email: currentUser.email,
             uid: currentUser.uid,
@@ -71,30 +67,32 @@ const AuthProvider = ({ children }) => {
           if (response.data.token) {
             localStorage.setItem("token", response.data.token);
 
-            // After token is set, save user information
-            const userInfo = {
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL,
-            };
+            // Save user info if displayName/photoURL is available
+            if (currentUser.displayName || currentUser.photoURL) {
+              const userInfo = {
+                email: currentUser.email,
+                displayName: currentUser.displayName || "Unnamed User",
+                photoURL: currentUser.photoURL || "",
+              };
 
-            try {
-              await axiosPublic.post("/users", userInfo);
-            } catch (userError) {
-              console.error("Error saving user info:", userError);
-              // Don't remove token if user save fails
+              try {
+                await axiosPublic.post("/users", userInfo);
+              } catch (userError) {
+                console.error("User info save error:", userError.message);
+              }
             }
           } else {
-            console.error("No token received from server");
+            console.error("No token from server");
             localStorage.removeItem("token");
           }
-        } catch (error) {
-          console.error("JWT Error:", error.response?.data || error.message);
+        } catch (err) {
+          console.error("JWT error:", err.message);
           localStorage.removeItem("token");
         }
       } else {
         localStorage.removeItem("token");
       }
+
       setLoading(false);
     });
 

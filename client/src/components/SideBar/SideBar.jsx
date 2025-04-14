@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
-import { ImProfile } from "react-icons/im";
+import { useNavigate, NavLink, Link } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
-import { FaUsers, FaBars, FaChevronLeft } from "react-icons/fa"; // New icons
+import {
+  FaUsers,
+  FaBars,
+  FaChevronLeft,
+  FaStore,
+  FaUserCircle,
+} from "react-icons/fa";
 import useAuth from "../../hooks/useAuth";
-import useAdmin from "../../hooks/useAdmin";
+import useRole from "../../hooks/useRole";
 
 const SideBar = () => {
   const { logOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
-  const { isAdmin } = useAdmin();
+  const [role, isLoading] = useRole();
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -21,6 +26,8 @@ const SideBar = () => {
     navigate("/");
   };
 
+  if (isLoading) return null;
+
   return (
     <aside
       className={`bg-[#FF4B2B] text-white h-screen sticky top-0 transition-all duration-300 ${
@@ -29,7 +36,11 @@ const SideBar = () => {
     >
       {/* Sidebar Header */}
       <div className="flex items-center justify-between p-4 border-b border-[#FF6F3C]">
-        {!isCollapsed && <h1 className="text-2xl font-bold">FoodZone</h1>}
+        {!isCollapsed && (
+          <Link to="/" className="text-2xl font-bold">
+            FoodZone
+          </Link>
+        )}
         <button
           onClick={toggleSidebar}
           className="text-white text-lg hover:bg-[#FF6F3C] p-2 rounded"
@@ -40,7 +51,7 @@ const SideBar = () => {
 
       {/* Sidebar Links */}
       <nav className="flex flex-col gap-4 p-4">
-        {isAdmin && (
+        {role === "admin" && (
           <NavLink
             to="/dashboard/manage-users"
             className={({ isActive }) =>
@@ -50,11 +61,44 @@ const SideBar = () => {
             }
           >
             <FaUsers size={22} />
-            <span className={`${isCollapsed && "hidden"}`}>Manage Users</span>
+            <span className={`${isCollapsed ? "hidden" : ""}`}>
+              Manage Users
+            </span>
           </NavLink>
         )}
 
-        {/* Profile */}
+        {role === "user" && (
+          <NavLink
+            to="/dashboard/request"
+            className={({ isActive }) =>
+              `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                isActive ? "bg-[#FF8C5A]" : ""
+              }`
+            }
+          >
+            <FaStore size={22} />
+            <span className={`${isCollapsed ? "hidden" : ""}`}>
+              Become Seller
+            </span>
+          </NavLink>
+        )}
+
+        {role === "seller" && (
+          <NavLink
+            to="/dashboard/request"
+            className={({ isActive }) =>
+              `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                isActive ? "bg-[#FF8C5A]" : ""
+              }`
+            }
+          >
+            <FaStore size={22} />
+            <span className={`${isCollapsed ? "hidden" : ""}`}>
+              Add Restaurant
+            </span>
+          </NavLink>
+        )}
+
         <NavLink
           to="/dashboard/profile"
           className={({ isActive }) =>
@@ -63,17 +107,16 @@ const SideBar = () => {
             }`
           }
         >
-          <ImProfile size={22} />
-          <span className={`${isCollapsed && "hidden"}`}>Profile</span>
+          <FaUserCircle size={22} />
+          <span className={`${isCollapsed ? "hidden" : ""}`}>Profile</span>
         </NavLink>
 
-        {/* Logout */}
         <button
           onClick={onLogout}
           className="flex items-center gap-4 p-3 rounded-lg hover:bg-red-500 transition"
         >
           <FiLogOut size={22} />
-          <span className={`${isCollapsed && "hidden"}`}>Logout</span>
+          <span className={`${isCollapsed ? "hidden" : ""}`}>Logout</span>
         </button>
       </nav>
     </aside>

@@ -142,77 +142,53 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// check if a user is admin
-app.get("/user/admin/:email", verifyToken, async (req, res) => {
-  try {
-    const email = req.params.email;
+// Get all users except the one with the given email
+app.get("/users/admin/:email", verifyToken, verifyAdmin, async (req, res) => {
+  const excludedEmail = req.params.email;
 
-    const { data: user, error } = await supabase
+  const { data, count } = await supabase
+    .from("users")
+    .select("*", { count: "exact" })
+    .neq("email", excludedEmail)
+    .order("created_at", { ascending: false });
+
+  res.send({
+    users: data,
+    totalUsers: count,
+  });
+});
+
+// Update user role and set status to "approved"
+app.patch(
+  "/users/update-role/:email",
+  verifyToken,
+  verifyAdmin,
+  async (req, res) => {
+    const { email } = req.params;
+    const { role } = req.body;
+
+    const { data, error } = await supabase
       .from("users")
-      .select("role")
+      .update({
+        role: role,
+        status: "approved",
+      })
       .eq("email", email)
-      .single();
+      .select();
 
-    if (error) {
-      return res.status(404).json({
-        success: false,
-        admin: false,
-        message: "User not found",
-      });
-    }
-
-    const isAdmin = user?.role === "admin";
-    res.json({
-      success: true,
-      admin: isAdmin,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      admin: false,
-      message: "Error checking admin status",
-      error: error.message,
+    res.send({
+      success: !error,
+      message: error ? "Failed to update user" : "User updated successfully",
+      user: data?.[0],
     });
   }
-});
-
-// Get all users endpoint with pagination
-app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const start = (page - 1) * limit;
-
-    const { data, error, count } = await supabase
-      .from("users")
-      .select("*", { count: "exact" })
-      .range(start, start + limit - 1)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    res.status(200).json({
-      success: true,
-      users: data,
-      totalUsers: count,
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({
-      message: "Error fetching users",
-      error: error.message,
-      success: false,
-    });
-  }
-});
+);
 
 // Get single user data
 app.get("/users/:email", verifyToken, async (req, res) => {
   try {
     const { email } = req.params;
-    console.log("Fetching user data for:", email); // Debug log
+    // console.log("Fetching user data for:", email); // Debug log
 
     const { data, error } = await supabase
       .from("users")
@@ -241,6 +217,56 @@ app.get("/users/:email", verifyToken, async (req, res) => {
       error: error.message,
     });
   }
+});
+
+// get user role
+app.get("/users/role/:email", verifyToken, async (req, res) => {
+  const { email } = req.params;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("role")
+    .eq("email", email)
+    .single();
+
+  if (error || !data) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found or error retrieving role",
+    });
+  }
+
+  res.status(200).json({
+    role: data.role,
+  });
+});
+
+// manage user status
+app.patch("/users/status/:email", async (req, res) => {
+  const email = req.params.email;
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("status")
+    .eq("email", email)
+    .single();
+
+  if (user?.status === "requested") {
+    return res.json({
+      message: "Request already submitted",
+      alreadyRequested: true,
+    });
+  }
+
+  await supabase
+    .from("users")
+    .update({ status: "requested" })
+    .eq("email", email);
+
+  res.json({
+    message: "Request submitted successfully",
+    alreadyRequested: false,
+  });
 });
 
 // Update user profile
