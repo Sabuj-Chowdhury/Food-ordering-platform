@@ -14,6 +14,8 @@ import ManageUsers from "../pages/Admin/ManageUsers/ManageUsers";
 import RequestPage from "../pages/Users/RequestPage/RequestPage";
 import AdminRoute from "./AdminRoute";
 import UserRoute from "./UserRoute";
+import SellerRoute from "./SellerRoute";
+import AddRestaurant from "../pages/Seller/AddRestaurant/AddRestaurant";
 
 const router = createBrowserRouter([
   {
@@ -87,6 +89,16 @@ const router = createBrowserRouter([
             <UserRoute>
               <RequestPage />
             </UserRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "add-restaurant",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <AddRestaurant />
+            </SellerRoute>
           </PrivateRoute>
         ),
       },

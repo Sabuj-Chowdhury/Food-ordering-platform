@@ -85,7 +85,7 @@ const SideBar = () => {
 
         {role === "seller" && (
           <NavLink
-            to="/dashboard/request"
+            to="/dashboard/add-restaurant"
             className={({ isActive }) =>
               `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
                 isActive ? "bg-[#FF8C5A]" : ""
