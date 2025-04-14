@@ -7,6 +7,10 @@ import {
   FaChevronLeft,
   FaStore,
   FaUserCircle,
+  FaUtensils,
+  FaClipboardList,
+  FaConciergeBell,
+  FaEdit,
 } from "react-icons/fa";
 import useAuth from "../../hooks/useAuth";
 import useRole from "../../hooks/useRole";
@@ -51,6 +55,7 @@ const SideBar = () => {
 
       {/* Sidebar Links */}
       <nav className="flex flex-col gap-4 p-4">
+        {/* admin routes */}
         {role === "admin" && (
           <NavLink
             to="/dashboard/manage-users"
@@ -66,6 +71,8 @@ const SideBar = () => {
             </span>
           </NavLink>
         )}
+
+        {/* User routes */}
 
         {role === "user" && (
           <NavLink
@@ -83,20 +90,78 @@ const SideBar = () => {
           </NavLink>
         )}
 
+        {/* seller routes */}
+
         {role === "seller" && (
-          <NavLink
-            to="/dashboard/add-restaurant"
-            className={({ isActive }) =>
-              `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
-                isActive ? "bg-[#FF8C5A]" : ""
-              }`
-            }
-          >
-            <FaStore size={22} />
-            <span className={`${isCollapsed ? "hidden" : ""}`}>
-              Add Restaurant
-            </span>
-          </NavLink>
+          <>
+            <NavLink
+              to="/dashboard/add-restaurant"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaStore size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                Add Restaurant
+              </span>
+            </NavLink>
+
+            <NavLink
+              to="/dashboard/add-menu"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaUtensils size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>Add Menu</span>
+            </NavLink>
+
+            <NavLink
+              to="/dashboard/manage-menu"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaEdit size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                Manage Menu
+              </span>
+            </NavLink>
+
+            <NavLink
+              to="/dashboard/manage-orders"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaClipboardList size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                Manage Orders
+              </span>
+            </NavLink>
+
+            <NavLink
+              to="/dashboard/my-restaurant"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaConciergeBell size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                My Restaurant
+              </span>
+            </NavLink>
+          </>
         )}
 
         <NavLink

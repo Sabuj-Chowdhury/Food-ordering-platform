@@ -16,6 +16,10 @@ import AdminRoute from "./AdminRoute";
 import UserRoute from "./UserRoute";
 import SellerRoute from "./SellerRoute";
 import AddRestaurant from "../pages/Seller/AddRestaurant/AddRestaurant";
+import AddMenu from "../pages/Seller/AddMenu/AddMenu";
+import ManageMenu from "../pages/Seller/ManageMenu/ManageMenu";
+import ManageOrders from "../pages/Seller/ManageOrders/ManageOrders";
+import MyRestaurant from "../pages/Seller/MyRestaurant/MyRestaurant";
 
 const router = createBrowserRouter([
   {
@@ -98,6 +102,46 @@ const router = createBrowserRouter([
           <PrivateRoute>
             <SellerRoute>
               <AddRestaurant />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "add-menu",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <AddMenu />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "manage-menu",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <ManageMenu />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "manage-orders",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <ManageOrders />
+            </SellerRoute>
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "my-restaurant",
+        element: (
+          <PrivateRoute>
+            <SellerRoute>
+              <MyRestaurant />
             </SellerRoute>
           </PrivateRoute>
         ),
