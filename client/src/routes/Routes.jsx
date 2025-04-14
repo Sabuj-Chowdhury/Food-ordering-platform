@@ -107,7 +107,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "add-menu",
+        path: "add-menu/:id",
         element: (
           <PrivateRoute>
             <SellerRoute>

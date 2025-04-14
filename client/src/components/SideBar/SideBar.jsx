@@ -95,7 +95,7 @@ const SideBar = () => {
         {role === "seller" && (
           <>
             <NavLink
-              to="/dashboard/add-restaurant"
+              to="/dashboard/add-restaurant/"
               className={({ isActive }) =>
                 `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
                   isActive ? "bg-[#FF8C5A]" : ""
@@ -106,18 +106,6 @@ const SideBar = () => {
               <span className={`${isCollapsed ? "hidden" : ""}`}>
                 Add Restaurant
               </span>
-            </NavLink>
-
-            <NavLink
-              to="/dashboard/add-menu"
-              className={({ isActive }) =>
-                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
-                  isActive ? "bg-[#FF8C5A]" : ""
-                }`
-              }
-            >
-              <FaUtensils size={22} />
-              <span className={`${isCollapsed ? "hidden" : ""}`}>Add Menu</span>
             </NavLink>
 
             <NavLink

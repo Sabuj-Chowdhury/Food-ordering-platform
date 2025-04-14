@@ -26,11 +26,29 @@ const AddRestaurant = () => {
   };
 
   const onSubmit = async (data) => {
-    try {
-      setLoading(true);
-      const imageFile = data.image[0];
-      const imageURL = await imageUpload(imageFile);
+    setLoading(true);
 
+    try {
+      const imageFile = data.image[0];
+
+      // Upload the image (with error handling)
+      let imageURL;
+      try {
+        imageURL = await imageUpload(imageFile);
+      } catch (uploadErr) {
+        console.error("Image upload failed:", uploadErr.message || uploadErr);
+        toast.error("Image upload failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (!imageURL) {
+        toast.error("Image upload returned no URL.");
+        setLoading(false);
+        return;
+      }
+
+      // Prepare restaurant data
       const restaurantData = {
         name: data.name,
         owner: user.displayName,
@@ -42,7 +60,9 @@ const AddRestaurant = () => {
         createdAt: new Date().toISOString(),
       };
 
+      // Submit to backend
       const res = await axiosSecure.post("/restaurants", restaurantData);
+
       if (res.data.success) {
         toast.success("Restaurant added successfully!");
         reset();
@@ -51,8 +71,11 @@ const AddRestaurant = () => {
         toast.error(res.data.message || "Failed to add restaurant.");
       }
     } catch (err) {
-      console.error(err);
-      toast.error("An error occurred while adding the restaurant.");
+      console.error("Submit error:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          "Something went wrong while adding restaurant."
+      );
     } finally {
       setLoading(false);
     }

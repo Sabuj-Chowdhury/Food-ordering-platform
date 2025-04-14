@@ -2,64 +2,104 @@ import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import useAuth from "../../../hooks/useAuth";
 import LoadingSpinner from "../../../components/LoadingSpinner/LoadingSpinner";
+import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const MyRestaurant = () => {
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
 
-  const { data: restaurant, isLoading } = useQuery({
+  const {
+    data: myRestaurants,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["myRestaurant", user?.email],
     queryFn: async () => {
       const res = await axiosSecure.get(`/restaurants/owner/${user?.email}`);
-      return res.data;
+      return res.data?.restaurants || [];
     },
-    enabled: !!user?.email,
   });
+
+  const handleDelete = async (id) => {
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this restaurant?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const res = await axiosSecure.delete(`/restaurants/${id}`);
+      if (res.data.success) {
+        toast.success("Restaurant deleted successfully!");
+        refetch();
+      } else {
+        toast.error("Failed to delete restaurant.");
+      }
+    } catch (err) {
+      toast.error("Something went wrong.");
+    }
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
-  if (!restaurant) {
-    return (
-      <div className="min-h-screen bg-[#FAF3E0] p-6 flex justify-center items-center">
-        <p className="text-xl text-gray-600 inter">
-          No restaurant found for your account.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#FAF3E0] p-6">
-      <h2 className="text-3xl playfair-display font-bold text-center text-[#FF4B2B] mb-8">
-        My Restaurant
+    <div className="min-h-screen bg-[#FAF3E0] p-4 sm:p-6">
+      <h2 className="text-3xl sm:text-4xl text-center font-bold text-[#FF4B2B] playfair-display mb-8">
+        🍽️ My Restaurants
       </h2>
 
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          <img
-            src={restaurant.image}
-            alt={restaurant.name}
-            className="w-full md:w-60 h-40 object-cover rounded-lg"
-          />
-          <div className="flex-1">
-            <h3 className="text-2xl font-semibold text-[#FF6F3C] poppins mb-2">
-              {restaurant.name}
-            </h3>
-            <p className="text-gray-700 inter mb-2">
-              <span className="font-medium">Owner:</span> {restaurant.owner}
-            </p>
-            <p className="text-gray-700 inter mb-2">
-              <span className="font-medium">Phone:</span> {restaurant.phone}
-            </p>
-            <p className="text-gray-700 inter mb-2">
-              <span className="font-medium">Cuisine:</span> {restaurant.cuisine}
-            </p>
-            <p className="text-gray-700 inter">
-              <span className="font-medium">Address:</span> {restaurant.address}
-            </p>
-          </div>
+      {myRestaurants.length === 0 ? (
+        <p className="text-center text-lg sm:text-xl text-gray-600 inter">
+          No restaurant found for your account.
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl shadow-md bg-white">
+          <table className="min-w-[600px] w-full text-sm sm:text-base">
+            <thead className="bg-[#FF4B2B] text-white text-left">
+              <tr>
+                <th className="p-4">Image</th>
+                <th className="p-4">Name</th>
+                <th className="p-4">Address</th>
+                <th className="p-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {myRestaurants.map((restaurant) => (
+                <tr
+                  key={restaurant.id}
+                  className="border-b border-gray-200 hover:bg-[#FFF7EC]"
+                >
+                  <td className="p-4">
+                    <img
+                      src={restaurant.image}
+                      alt={restaurant.name}
+                      className="w-16 h-14 sm:w-20 sm:h-16 object-cover rounded"
+                    />
+                  </td>
+                  <td className="p-4 font-semibold text-[#FF6F3C]">
+                    {restaurant.name}
+                  </td>
+                  <td className="p-4 text-gray-800">{restaurant.address}</td>
+                  <td className="p-4 text-center space-y-2 sm:space-y-0 sm:space-x-2 flex sm:justify-center flex-col sm:flex-row items-center">
+                    <Link
+                      to={`/dashboard/add-menu/${restaurant.id}`}
+                      className="bg-[#B6FF69] text-[#2E2E2E] font-semibold px-3 py-1 rounded hover:brightness-110 transition w-full sm:w-auto text-center"
+                    >
+                      ➕ Add Menu
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(restaurant.id)}
+                      className="bg-red-500 text-white font-semibold px-3 py-1 rounded hover:bg-red-600 transition w-full sm:w-auto"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -313,38 +313,95 @@ app.patch("/users/:email", verifyToken, async (req, res) => {
 
 // Add restaurant to DB
 app.post("/restaurants", verifyToken, async (req, res) => {
-  const restaurant = req.body;
+  try {
+    const restaurant = req.body;
 
-  const { data, error } = await supabase
-    .from("restaurants")
-    .insert([
-      {
-        name: restaurant.name,
-        owner: restaurant.owner,
-        phone: restaurant.phone,
-        address: restaurant.address,
-        cuisine: restaurant.cuisine,
-        image: restaurant.image,
-        email: restaurant.email,
-        created_at: restaurant.createdAt,
-      },
-    ])
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from("restaurants")
+      .insert([
+        {
+          name: restaurant.name,
+          owner: restaurant.owner,
+          phone: restaurant.phone,
+          address: restaurant.address,
+          cuisine: restaurant.cuisine,
+          image: restaurant.image,
+          email: restaurant.email,
+          created_at: restaurant.createdAt,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error inserting restaurant:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to save restaurant",
+        error: error.message,
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Restaurant added successfully",
+      restaurant: data,
+    });
+  } catch (err) {
+    console.error("Unexpected error while saving restaurant:", err);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong while saving the restaurant",
+      error: err.message,
+    });
+  }
+});
+
+// get all restaurants data by user email
+app.get("/restaurants/owner/:email", verifyToken, async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from("restaurants")
+      .select("*")
+      .eq("email", email);
+
+    if (error) {
+      console.error("Supabase error:", error.message);
+      return res.status(500).json({ error: "Failed to fetch restaurants" });
+    }
+
+    if (!data || data.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No restaurants found for this email" });
+    }
+
+    res.status(200).json({ restaurants: data });
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Delete restaurant
+app.delete("/restaurants/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase.from("restaurants").delete().eq("id", id);
 
   if (error) {
-    console.error("Error inserting restaurant:", error.message);
     return res.status(500).json({
       success: false,
-      message: "Failed to save restaurant",
+      message: "Error deleting restaurant",
       error: error.message,
     });
   }
 
-  res.status(201).json({
+  res.status(200).json({
     success: true,
-    message: "Restaurant added successfully",
-    restaurant: data,
+    message: "Restaurant deleted",
   });
 });
 
