@@ -4,8 +4,14 @@ import { toast } from "react-hot-toast";
 import { imageUpload } from "../../../utils/imagebbAPI";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import { TbFidgetSpinner } from "react-icons/tb";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import useAuth from "../../../hooks/useAuth";
 
 const AddMenu = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
@@ -23,9 +29,24 @@ const AddMenu = () => {
 
   const onSubmit = async (data) => {
     setLoading(true);
+
     try {
       const imageFile = data.image[0];
-      const imageURL = await imageUpload(imageFile);
+      let imageURL;
+
+      try {
+        imageURL = await imageUpload(imageFile);
+      } catch (uploadErr) {
+        toast.error("Image upload failed.");
+        setLoading(false);
+        return;
+      }
+
+      if (!imageURL) {
+        toast.error("Invalid image URL.");
+        setLoading(false);
+        return;
+      }
 
       const menuItem = {
         name: data.name,
@@ -33,16 +54,20 @@ const AddMenu = () => {
         price: parseFloat(data.price),
         category: data.category,
         image: imageURL,
+        restaurant_id: id,
+        owner_email: user?.email,
         createdAt: new Date().toISOString(),
       };
 
       const res = await axiosSecure.post("/menu", menuItem);
+
       if (res.data.success) {
         toast.success("Menu item added successfully!");
         reset();
         setPreview(null);
+        navigate(`/dashboard/manage-menu`); //  Redirect to menu management
       } else {
-        toast.error(res.data.message || "Failed to add item.");
+        toast.error(res.data.message || "Failed to add menu item.");
       }
     } catch (error) {
       toast.error("Something went wrong.");
@@ -54,6 +79,15 @@ const AddMenu = () => {
   return (
     <div className="min-h-screen bg-[#FAF3E0] py-12 px-6 flex justify-center items-center">
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-8 md:p-10">
+        {/* ✅ Go Back Button */}
+        <div className="mb-6">
+          <Link
+            to="/dashboard/my-restaurant"
+            className="inline-block bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-4 py-2 rounded-md transition"
+          >
+            ← Go Back
+          </Link>
+        </div>
         <h2 className="text-3xl playfair-display font-bold text-[#FF4B2B] text-center mb-6">
           Add Menu Item
         </h2>
@@ -158,9 +192,7 @@ const AddMenu = () => {
               type="submit"
               className="bg-[#B6FF69] text-[#121212] poppins font-semibold px-6 py-3 rounded-lg hover:brightness-110 transition flex items-center gap-2"
             >
-              {loading ? (
-                <TbFidgetSpinner className="animate-spin text-xl" />
-              ) : null}
+              {loading && <TbFidgetSpinner className="animate-spin text-xl" />}
               {loading ? "Adding..." : "Add Menu Item"}
             </button>
           </div>

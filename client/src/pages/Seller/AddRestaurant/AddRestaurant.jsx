@@ -5,9 +5,12 @@ import useAuth from "../../../hooks/useAuth";
 import { imageUpload } from "../../../utils/imagebbAPI";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import { TbFidgetSpinner } from "react-icons/tb";
+import { useNavigate } from "react-router-dom";
 
 const AddRestaurant = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
@@ -67,6 +70,7 @@ const AddRestaurant = () => {
         toast.success("Restaurant added successfully!");
         reset();
         setSelectedImage(null);
+        navigate("/dashboard/my-restaurant"); // ✅ redirect
       } else {
         toast.error(res.data.message || "Failed to add restaurant.");
       }

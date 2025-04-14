@@ -4,13 +4,14 @@ import useAuth from "../../../hooks/useAuth";
 import LoadingSpinner from "../../../components/LoadingSpinner/LoadingSpinner";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const MyRestaurant = () => {
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
 
   const {
-    data: myRestaurants,
+    data: myRestaurants = [], // <- default fallback here
     isLoading,
     refetch,
   } = useQuery({
@@ -19,24 +20,53 @@ const MyRestaurant = () => {
       const res = await axiosSecure.get(`/restaurants/owner/${user?.email}`);
       return res.data?.restaurants || [];
     },
+    enabled: !!user?.email,
   });
 
   const handleDelete = async (id) => {
-    const confirmDelete = confirm(
-      "Are you sure you want to delete this restaurant?"
-    );
-    if (!confirmDelete) return;
+    const swalWithTailwindButtons = Swal.mixin({
+      customClass: {
+        actions: "flex justify-center gap-4 mt-4", // 👈 clean spacing between buttons
+        confirmButton:
+          "bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded",
+        cancelButton:
+          "bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded",
+      },
+      buttonsStyling: false,
+    });
 
-    try {
-      const res = await axiosSecure.delete(`/restaurants/${id}`);
-      if (res.data.success) {
-        toast.success("Restaurant deleted successfully!");
-        refetch();
-      } else {
-        toast.error("Failed to delete restaurant.");
+    const result = await swalWithTailwindButtons.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "No, cancel!",
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await axiosSecure.delete(`/restaurants/${id}`);
+        if (res.data.success) {
+          await swalWithTailwindButtons.fire({
+            title: "Deleted!",
+            text: "Restaurant has been deleted.",
+            icon: "success",
+          });
+          refetch();
+        } else {
+          toast.error("Failed to delete restaurant.");
+        }
+      } catch (err) {
+        toast.error("Something went wrong.");
       }
-    } catch (err) {
-      toast.error("Something went wrong.");
+    } else if (result.dismiss === Swal.DismissReason.cancel) {
+      swalWithTailwindButtons.fire({
+        title: "Cancelled",
+        text: "Your restaurant is safe 😊",
+        icon: "error",
+      });
     }
   };
 

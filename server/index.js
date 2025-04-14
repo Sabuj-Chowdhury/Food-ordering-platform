@@ -405,6 +405,92 @@ app.delete("/restaurants/:id", verifyToken, async (req, res) => {
   });
 });
 
+// Add a menu in the database
+app.post("/menu", async (req, res) => {
+  const {
+    name,
+    description,
+    price,
+    category,
+    image,
+    restaurant_id,
+    owner_email,
+  } = req.body;
+
+  if (
+    !name ||
+    !description ||
+    !price ||
+    !category ||
+    !image ||
+    !restaurant_id ||
+    !owner_email
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields." });
+  }
+
+  const { error } = await supabase.from("menu").insert([
+    {
+      name,
+      description,
+      price,
+      category,
+      image,
+      restaurant_id,
+      owner_email,
+    },
+  ]);
+
+  if (error) {
+    console.error("🔥 Supabase insert error:", error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+
+  res.json({ success: true, message: "Menu item added successfully!" });
+});
+
+// get all menu items for that user
+// Get menu items by owner email and include restaurant name
+app.get("/menu/:email", async (req, res) => {
+  const { email } = req.params;
+
+  const { data, error } = await supabase
+    .from("menu")
+    .select(
+      `
+      id,
+      name,
+      description,
+      price,
+      category,
+      image,
+      restaurant_id,
+      restaurants (
+        name
+      )
+    `
+    )
+    .eq("owner_email", email);
+
+  if (error) {
+    console.error("Supabase JOIN error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch menu" });
+  }
+
+  // 💡 Rename the restaurant name to avoid conflict with menu name
+  const formatted = data.map((item) => ({
+    ...item,
+    food_name: item.name, // menu item name
+    restaurant_name: item.restaurants?.name || "Unknown",
+  }));
+
+  res.json(formatted);
+});
+
 app.listen(port, () => {
   console.log(`FoodZone is running on port ${port}`);
 });
