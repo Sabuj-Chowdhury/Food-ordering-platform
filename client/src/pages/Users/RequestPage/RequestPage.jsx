@@ -96,7 +96,7 @@ const RequestPage = () => {
 
           <button
             type="submit"
-            className="w-full bg-[#B6FF69] text-[#121212] poppins font-semibold py-2 rounded-lg hover:brightness-110 transition-all"
+            className="cursor-pointer w-full bg-[#B6FF69] text-[#121212] poppins font-semibold py-2 rounded-lg hover:brightness-110 transition-all"
           >
             Submit Request
           </button>

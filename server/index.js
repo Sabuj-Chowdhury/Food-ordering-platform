@@ -311,6 +311,43 @@ app.patch("/users/:email", verifyToken, async (req, res) => {
   }
 });
 
+// Add restaurant to DB
+app.post("/restaurants", verifyToken, async (req, res) => {
+  const restaurant = req.body;
+
+  const { data, error } = await supabase
+    .from("restaurants")
+    .insert([
+      {
+        name: restaurant.name,
+        owner: restaurant.owner,
+        phone: restaurant.phone,
+        address: restaurant.address,
+        cuisine: restaurant.cuisine,
+        image: restaurant.image,
+        email: restaurant.email,
+        created_at: restaurant.createdAt,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error inserting restaurant:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to save restaurant",
+      error: error.message,
+    });
+  }
+
+  res.status(201).json({
+    success: true,
+    message: "Restaurant added successfully",
+    restaurant: data,
+  });
+});
+
 app.listen(port, () => {
   console.log(`FoodZone is running on port ${port}`);
 });
