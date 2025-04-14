@@ -426,6 +426,45 @@ app.get("/api/public/restaurants", async (req, res) => {
   }
 });
 
+// GET /api/public/restaurant/:id/menu
+app.get("/api/public/restaurant/:id/menu", async (req, res) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("restaurants")
+    .select(
+      `
+      id,
+      name,
+      address,
+      image,
+      cuisine,
+      menu (
+        id,
+        name,
+        description,
+        price,
+        category,
+        image
+      )
+    `
+    )
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+
+  if (!data) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Restaurant not found" });
+  }
+
+  res.json(data);
+});
+
 // Add a menu in the database
 app.post("/menu", verifyToken, async (req, res) => {
   const {

@@ -21,6 +21,7 @@ import ManageMenu from "../pages/Seller/ManageMenu/ManageMenu";
 import ManageOrders from "../pages/Seller/ManageOrders/ManageOrders";
 import MyRestaurant from "../pages/Seller/MyRestaurant/MyRestaurant";
 import UpdateMenu from "../pages/Seller/UpdateMenu/UpdateMenu";
+import Menu from "../pages/Menu/Menu";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
       {
         path: "/restaurants",
         element: <Restaurants />,
+      },
+      {
+        path: "/restaurant/:id",
+        element: <Menu />,
       },
       {
         path: "/about",
@@ -53,6 +58,7 @@ const router = createBrowserRouter([
     path: "/register",
     element: <Register />,
   },
+
   {
     path: "/dashboard",
     element: (
