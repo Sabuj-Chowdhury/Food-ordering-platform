@@ -1,13 +1,18 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { AiOutlineMenu, AiOutlineClose } from "react-icons/ai";
+import { CartContext } from "../../../context/CartContext";
+import { FiShoppingCart } from "react-icons/fi";
 
 const Navbar = () => {
   const { user, logOut } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { cart } = useContext(CartContext);
+  console.log(cart);
+  const totalCartQty = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const onLogout = async () => {
     await logOut();
@@ -77,6 +82,20 @@ const Navbar = () => {
             }
           >
             Contact
+          </NavLink>
+
+          <NavLink
+            to="/checkout"
+            className={({ isActive }) =>
+              `px-4 py-2 rounded-xl transition duration-300 ease-in-out flex items-center gap-1 ${
+                isActive
+                  ? "bg-[#B6FF69] text-black shadow-lg"
+                  : "hover:text-[#B6FF69]"
+              }`
+            }
+          >
+            <FiShoppingCart className="text-lg" />
+            Checkout({totalCartQty})
           </NavLink>
         </div>
 

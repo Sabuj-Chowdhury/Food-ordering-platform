@@ -439,6 +439,8 @@ app.get("/api/public/restaurant/:id/menu", async (req, res) => {
       address,
       image,
       cuisine,
+      phone,
+      email,
       menu (
         id,
         name,

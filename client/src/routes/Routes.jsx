@@ -22,6 +22,7 @@ import ManageOrders from "../pages/Seller/ManageOrders/ManageOrders";
 import MyRestaurant from "../pages/Seller/MyRestaurant/MyRestaurant";
 import UpdateMenu from "../pages/Seller/UpdateMenu/UpdateMenu";
 import Menu from "../pages/Menu/Menu";
+import Checkout from "../pages/Checkout/Checkout";
 
 const router = createBrowserRouter([
   {
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
       {
         path: "/contact",
         element: <Contact />,
+      },
+      {
+        path: "/checkout",
+        element: <Checkout />,
       },
     ],
   },
