@@ -17,6 +17,12 @@ const Restaurants = () => {
     },
   });
 
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setFilterCuisine("");
+    setSortOption("name");
+  };
+
   const filteredAndSorted = useMemo(() => {
     let result = [...publicRestaurants];
 
@@ -51,7 +57,7 @@ const Restaurants = () => {
           🍴 Explore Restaurants on FoodZone
         </h1>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-between items-center mb-8">
           <input
             type="text"
             placeholder="Search restaurants..."
@@ -79,6 +85,13 @@ const Restaurants = () => {
             <option value="name">Sort by Name</option>
             <option value="location">Sort by Location</option>
           </select>
+
+          <button
+            onClick={handleResetFilters}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded w-full sm:w-fit text-sm font-medium"
+          >
+            Reset Filters
+          </button>
         </div>
 
         {isLoading ? (

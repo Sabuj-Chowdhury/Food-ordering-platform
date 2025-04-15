@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import useAxiosSecure from "../../../hooks/useAxiosSecure";
 import useAuth from "../../../hooks/useAuth";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../../components/LoadingSpinner/LoadingSpinner";
 import { FaTrash, FaEdit } from "react-icons/fa";
@@ -12,6 +12,11 @@ const ManageMenu = () => {
   const axiosSecure = useAxiosSecure();
   const { user } = useAuth();
   const [deletingId, setDeletingId] = useState(null);
+
+  // Filters & Sort
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortOption, setSortOption] = useState("");
 
   const {
     data: menu = [],
@@ -76,6 +81,40 @@ const ManageMenu = () => {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("");
+    setSortOption("");
+  };
+
+  const filteredMenu = useMemo(() => {
+    let result = [...menu];
+
+    if (searchTerm) {
+      result = result.filter(
+        (item) =>
+          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedCategory) {
+      result = result.filter((item) => item.category === selectedCategory);
+    }
+
+    if (sortOption === "name-asc") {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortOption === "name-desc") {
+      result.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (sortOption === "price-asc") {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortOption === "price-desc") {
+      result.sort((a, b) => b.price - a.price);
+    }
+
+    return result;
+  }, [menu, searchTerm, selectedCategory, sortOption]);
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -84,7 +123,48 @@ const ManageMenu = () => {
         🍽️ Manage Menu Items
       </h2>
 
-      {menu.length === 0 ? (
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Search by name or restaurant"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border border-gray-300 px-4 py-2 rounded-md w-full sm:w-1/3"
+        />
+
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="border border-gray-300 px-4 py-2 rounded-md w-full sm:w-1/4"
+        >
+          <option value="">All Categories</option>
+          <option value="main">Main</option>
+          <option value="starter">Starter</option>
+          <option value="dessert">Dessert</option>
+          <option value="beverage">Beverage</option>
+        </select>
+
+        <select
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+          className="border border-gray-300 px-4 py-2 rounded-md w-full sm:w-1/4"
+        >
+          <option value="">Sort by</option>
+          <option value="name-asc">Name A-Z</option>
+          <option value="name-desc">Name Z-A</option>
+          <option value="price-asc">Price Low-High</option>
+          <option value="price-desc">Price High-Low</option>
+        </select>
+
+        <button
+          onClick={handleResetFilters}
+          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded-md whitespace-nowrap"
+        >
+          Reset Filters
+        </button>
+      </div>
+
+      {filteredMenu.length === 0 ? (
         <p className="text-center text-xl text-gray-600 mt-10">
           No menu items found.
         </p>
@@ -102,7 +182,7 @@ const ManageMenu = () => {
               </tr>
             </thead>
             <tbody>
-              {menu.map((item) => (
+              {filteredMenu.map((item) => (
                 <tr
                   key={item.id}
                   className="border-b border-gray-200 hover:bg-[#FFF6ED]"
@@ -125,8 +205,7 @@ const ManageMenu = () => {
                       to={`/dashboard/update-menu/${item.id}`}
                       className="bg-[#FF6F3C] hover:bg-[#e95b2e] text-white px-3 py-2 rounded-md font-semibold flex items-center gap-2"
                     >
-                      <FaEdit />
-                      Edit
+                      <FaEdit /> Edit
                     </Link>
                     <button
                       disabled={deletingId === item.id}
