@@ -15,6 +15,24 @@ const MyOrders = () => {
     enabled: !!user?.email,
   });
 
+  const getStatusBadge = (status) => {
+    let style = "bg-gray-200 text-gray-700";
+
+    if (status === "pending") style = "bg-yellow-200 text-yellow-800";
+    else if (status === "preparing") style = "bg-orange-200 text-orange-800";
+    else if (status === "out for delivery") style = "bg-blue-200 text-blue-800";
+    else if (status === "delivered") style = "bg-green-200 text-green-800";
+    else if (status === "cancelled") style = "bg-red-200 text-red-800";
+
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-semibold capitalize ${style}`}
+      >
+        {status}
+      </span>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg">
@@ -57,17 +75,25 @@ const MyOrders = () => {
                       {new Date(order.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
-                      {order.items?.length || 0} items
+                      <ul className="list-disc list-inside text-xs text-gray-700">
+                        {order.items?.map((item, idx) => (
+                          <li key={idx}>
+                            {item.name} x{item.quantity}
+                          </li>
+                        ))}
+                      </ul>
                     </td>
                     <td className="px-4 py-3 font-bold text-[#1A3D25]">
                       ৳ {order.total?.toFixed(2)}
                     </td>
-                    <td className="px-4 py-3">{order.payment_status}</td>
-                    <td className="px-4 py-3 capitalize">
+                    <td className="px-4 py-3 capitalize text-sm">
+                      {order.payment_status}
+                    </td>
+                    <td className="px-4 py-3 capitalize text-sm">
                       {order.payment_method}
                     </td>
-                    <td className="px-4 py-3 capitalize">
-                      {order.order_status}
+                    <td className="px-4 py-3">
+                      {getStatusBadge(order.order_status)}
                     </td>
                   </tr>
                 ))}
