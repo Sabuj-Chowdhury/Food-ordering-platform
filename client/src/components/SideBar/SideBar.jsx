@@ -11,6 +11,8 @@ import {
   FaClipboardList,
   FaConciergeBell,
   FaEdit,
+  FaShoppingCart,
+  FaHistory,
 } from "react-icons/fa";
 import useAuth from "../../hooks/useAuth";
 import useRole from "../../hooks/useRole";
@@ -73,21 +75,49 @@ const SideBar = () => {
         )}
 
         {/* User routes */}
-
         {role === "user" && (
-          <NavLink
-            to="/dashboard/request"
-            className={({ isActive }) =>
-              `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
-                isActive ? "bg-[#FF8C5A]" : ""
-              }`
-            }
-          >
-            <FaStore size={22} />
-            <span className={`${isCollapsed ? "hidden" : ""}`}>
-              Become Seller
-            </span>
-          </NavLink>
+          <>
+            <NavLink
+              to="/dashboard/my-orders"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaShoppingCart size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                My Orders
+              </span>
+            </NavLink>
+
+            <NavLink
+              to="/dashboard/payment-history"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaHistory size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                Payment History
+              </span>
+            </NavLink>
+            <NavLink
+              to="/dashboard/request"
+              className={({ isActive }) =>
+                `flex items-center gap-4 p-3 rounded-lg hover:bg-[#FF6F3C] transition ${
+                  isActive ? "bg-[#FF8C5A]" : ""
+                }`
+              }
+            >
+              <FaStore size={22} />
+              <span className={`${isCollapsed ? "hidden" : ""}`}>
+                Become Seller
+              </span>
+            </NavLink>
+          </>
         )}
 
         {/* seller routes */}

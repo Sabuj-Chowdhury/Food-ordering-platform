@@ -23,6 +23,8 @@ import MyRestaurant from "../pages/Seller/MyRestaurant/MyRestaurant";
 import UpdateMenu from "../pages/Seller/UpdateMenu/UpdateMenu";
 import Menu from "../pages/Menu/Menu";
 import Checkout from "../pages/Checkout/Checkout";
+import MyOrders from "../pages/Users/MyOrders/MyOrders";
+import PaymentHistory from "../pages/Users/Payments/PaymentHistory";
 
 const router = createBrowserRouter([
   {
@@ -88,6 +90,8 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+
+      // Admin Routes
       {
         path: "manage-users",
         element: (
@@ -98,6 +102,8 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+
+      // USER Routes
       {
         path: "request",
         element: (
@@ -108,6 +114,30 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+
+      {
+        path: "my-orders",
+        element: (
+          <PrivateRoute>
+            <UserRoute>
+              <MyOrders />
+            </UserRoute>
+          </PrivateRoute>
+        ),
+      },
+
+      {
+        path: "payment-history",
+        element: (
+          <PrivateRoute>
+            <UserRoute>
+              <PaymentHistory />
+            </UserRoute>
+          </PrivateRoute>
+        ),
+      },
+
+      // Seller Routes
       {
         path: "add-restaurant",
         element: (

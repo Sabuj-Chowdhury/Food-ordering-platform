@@ -1,90 +1,188 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { CartContext } from "../../context/CartContext";
 import { FiPlus, FiMinus, FiTrash2 } from "react-icons/fi";
+import { toast } from "react-hot-toast";
+import useRole from "../../hooks/useRole";
+import axios from "axios";
+import { FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
 
 const Checkout = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } =
     useContext(CartContext);
+  const [role] = useRole();
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [method, setMethod] = useState("cod");
+
+  const handleCheckout = async () => {
+    if (!name || !phone || !email || !address || !method) {
+      return toast.error("Please fill out all fields.");
+    }
+
+    const orderData = {
+      name,
+      phone,
+      email,
+      address,
+      cart,
+      total: cartTotal,
+      paymentMethod: method,
+    };
+
+    try {
+      if (method === "cod") {
+        await axios.post("/api/order", orderData);
+        clearCart();
+        toast.success("Order placed successfully!");
+      } else if (method === "ssl") {
+        const res = await axios.post("/api/ssl-payment", orderData);
+        window.location.href = res.data.gateway_url;
+      }
+    } catch (err) {
+      toast.error("Checkout failed.");
+    }
+  };
 
   if (!cart.length) {
     return (
       <div className="min-h-screen bg-[#FAF3E0] flex items-center justify-center text-xl text-gray-700">
-        🛒 Your cart is empty. Go add something delicious!
+        🛒 Your cart is empty.
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF3E0] py-10 px-4 sm:px-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl playfair-display font-bold text-[#FF4B2B] mb-10 text-center">
-          Checkout
-        </h1>
+    <div className="min-h-screen bg-[#FAF3E0] py-12 px-4 sm:px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Delivery Info */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md space-y-4">
+          <h2 className="text-2xl font-bold text-[#FF4B2B] mb-4">
+            Delivery Info
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input-style border border-amber-400 p-2 focus:outline-none"
+            />
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="input-style border border-amber-400 p-2 focus:outline-none"
+            />
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="input-style border border-amber-400 p-2 focus:outline-none"
+            />
+            <textarea
+              placeholder="Delivery Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={3}
+              className="input-style resize-none col-span-full border border-amber-400 p-2 focus:outline-none"
+            ></textarea>
+          </div>
 
-        <div className="space-y-6">
-          {cart.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between bg-white p-4 rounded-xl shadow-md"
-            >
-              <div className="flex items-center gap-4">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-16 h-16 object-cover rounded-lg"
-                />
-                <div>
-                  <h3 className="text-lg font-semibold text-[#2E2E2E]">
-                    {item.name}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    ৳ {item.price} x {item.quantity}
-                  </p>
-                </div>
-              </div>
+          <h3 className="text-xl font-semibold mt-6 mb-2 text-[#2E2E2E]">
+            Payment Method
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-6">
+            {/* Cash on Delivery */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="payment"
+                value="cod"
+                checked={method === "cod"}
+                onChange={() => setMethod("cod")}
+              />
+              <FaMoneyBillWave className="text-green-600 text-xl" />
+              <span>Cash on Delivery</span>
+            </label>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() =>
-                    updateQuantity(item.id, Math.max(1, item.quantity - 1))
-                  }
-                  className="p-2 rounded border border-gray-400 text-sm hover:text-[#FF6F3C]"
-                >
-                  <FiMinus />
-                </button>
-                <span className="w-6 text-center">{item.quantity}</span>
-                <button
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  className="p-2 rounded border border-gray-400 text-sm hover:text-[#FF6F3C]"
-                >
-                  <FiPlus />
-                </button>
-                <button
-                  onClick={() => removeFromCart(item.id)}
-                  className="p-2 rounded text-red-500 hover:text-red-600"
-                >
-                  <FiTrash2 />
-                </button>
-              </div>
-            </div>
-          ))}
+            {/* SSLCommerz */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="payment"
+                value="ssl"
+                checked={method === "ssl"}
+                onChange={() => setMethod("ssl")}
+              />
+
+              <FaCreditCard className="text-blue-500 text-xl" />
+
+              <span>Pay via SSLCommerz</span>
+            </label>
+          </div>
         </div>
 
-        {/* Grand Total */}
-        <div className="mt-10 bg-white rounded-xl shadow-md p-6 text-right">
-          <h2 className="text-2xl font-bold text-[#1A3D25]">
-            Total: ৳ {cartTotal.toFixed(2)}
-          </h2>
-          <button
-            onClick={() => {
-              // fake order placing
-              alert("Order placed!");
-              clearCart();
-            }}
-            className="mt-4 bg-[#FF4B2B] hover:bg-[#e04723] text-white px-6 py-2 rounded-lg text-lg font-semibold transition"
-          >
-            Place Order
-          </button>
+        {/* Right: Order Summary */}
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
+            <h2 className="text-xl font-bold text-[#FF6F3C]">Your Order</h2>
+            {cart.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between border-b pb-3"
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-12 h-12 object-cover rounded-md"
+                  />
+                  <div>
+                    <h4 className="text-sm font-semibold">{item.name}</h4>
+                    <p className="text-xs text-gray-500">
+                      ৳ {item.price} x {item.quantity}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      updateQuantity(item.id, Math.max(1, item.quantity - 1))
+                    }
+                  >
+                    <FiMinus />
+                  </button>
+                  <span>{item.quantity}</span>
+                  <button
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                  >
+                    <FiPlus />
+                  </button>
+                  <button onClick={() => removeFromCart(item.id)}>
+                    <FiTrash2 className="text-red-500" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Total */}
+            <div className="text-right mt-6">
+              <h3 className="text-xl font-bold text-[#1A3D25]">
+                Total: ৳ {cartTotal.toFixed(2)}
+              </h3>
+              <button
+                onClick={handleCheckout}
+                className="mt-4 w-full bg-[#FF4B2B] hover:bg-[#e95b2e] text-white px-6 py-3 rounded-lg text-lg font-semibold transition"
+              >
+                Place Order
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
