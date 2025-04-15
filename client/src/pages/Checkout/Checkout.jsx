@@ -3,30 +3,41 @@ import { CartContext } from "../../context/CartContext";
 import { FiPlus, FiMinus, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import useRole from "../../hooks/useRole";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
 import { FaCreditCard, FaMoneyBillWave } from "react-icons/fa";
+import useAuth from "../../hooks/useAuth";
+import useAxiosPublic from "../../hooks/useAxiosPublic";
 
 const Checkout = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } =
     useContext(CartContext);
+
+  // console.log(cart);
+
+  const { user } = useAuth();
+
   const [role] = useRole();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+
   const [address, setAddress] = useState("");
   const [method, setMethod] = useState("cod");
 
+  const axiosPublic = useAxiosPublic();
+
   const handleCheckout = async () => {
-    if (!name || !phone || !email || !address || !method) {
+    if (!name || !phone || !address || !method) {
       return toast.error("Please fill out all fields.");
     }
 
     const orderData = {
-      name,
-      phone,
-      email,
-      address,
+      user_name: name,
+      user_phone: phone,
+      user_email: user?.email,
+      user_address: address,
       cart,
       total: cartTotal,
       paymentMethod: method,
@@ -34,11 +45,12 @@ const Checkout = () => {
 
     try {
       if (method === "cod") {
-        await axios.post("/api/order", orderData);
+        await axiosPublic.post("/api/order", orderData);
         clearCart();
         toast.success("Order placed successfully!");
+        navigate("/dashboard/my-orders");
       } else if (method === "ssl") {
-        const res = await axios.post("/api/ssl-payment", orderData);
+        const res = await axiosPublic.post("/api/ssl-payment", orderData);
         window.location.href = res.data.gateway_url;
       }
     } catch (err) {
@@ -62,69 +74,78 @@ const Checkout = () => {
           <h2 className="text-2xl font-bold text-[#FF4B2B] mb-4">
             Delivery Info
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input-style border border-amber-400 p-2 focus:outline-none"
-            />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="input-style border border-amber-400 p-2 focus:outline-none"
-            />
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-style border border-amber-400 p-2 focus:outline-none"
-            />
-            <textarea
-              placeholder="Delivery Address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={3}
-              className="input-style resize-none col-span-full border border-amber-400 p-2 focus:outline-none"
-            ></textarea>
-          </div>
 
-          <h3 className="text-xl font-semibold mt-6 mb-2 text-[#2E2E2E]">
-            Payment Method
-          </h3>
-          <div className="flex flex-col sm:flex-row gap-6">
-            {/* Cash on Delivery */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="payment"
-                value="cod"
-                checked={method === "cod"}
-                onChange={() => setMethod("cod")}
-              />
-              <FaMoneyBillWave className="text-green-600 text-xl" />
-              <span>Cash on Delivery</span>
-            </label>
+          {role === "admin" || role === "seller" ? (
+            <p className="text-red-500 font-medium">
+              🚫 Checkout is not available for admin or seller accounts.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="input-style border border-amber-400 p-2 focus:outline-none"
+                />
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input-style border border-amber-400 p-2 focus:outline-none"
+                />
+                <input
+                  type="email"
+                  placeholder="Email Address"
+                  value={user?.email || ""}
+                  readOnly
+                  disabled
+                  className="input-style border border-amber-400 p-2 bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
 
-            {/* SSLCommerz */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio"
-                name="payment"
-                value="ssl"
-                checked={method === "ssl"}
-                onChange={() => setMethod("ssl")}
-              />
+                <textarea
+                  placeholder="Delivery Address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  rows={3}
+                  className="input-style resize-none col-span-full border border-amber-400 p-2 focus:outline-none"
+                ></textarea>
+              </div>
 
-              <FaCreditCard className="text-blue-500 text-xl" />
+              <h3 className="text-xl font-semibold mt-6 mb-2 text-[#2E2E2E]">
+                Payment Method
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-6">
+                {/* Cash on Delivery */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="cod"
+                    checked={method === "cod"}
+                    onChange={() => setMethod("cod")}
+                  />
+                  <FaMoneyBillWave className="text-green-600 text-xl" />
+                  <span>Cash on Delivery</span>
+                </label>
 
-              <span>Pay via SSLCommerz</span>
-            </label>
-          </div>
+                {/* SSLCommerz */}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="ssl"
+                    checked={method === "ssl"}
+                    onChange={() => setMethod("ssl")}
+                  />
+                  <FaCreditCard className="text-blue-500 text-xl" />
+                  <span>Pay via SSLCommerz</span>
+                </label>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right: Order Summary */}
@@ -170,17 +191,29 @@ const Checkout = () => {
               </div>
             ))}
 
-            {/* Total */}
+            {/* Total & Conditional Payment Button */}
             <div className="text-right mt-6">
-              <h3 className="text-xl font-bold text-[#1A3D25]">
+              <h3 className="text-xl font-bold text-[#1A3D25] mb-4">
                 Total: ৳ {cartTotal.toFixed(2)}
               </h3>
-              <button
-                onClick={handleCheckout}
-                className="mt-4 w-full bg-[#FF4B2B] hover:bg-[#e95b2e] text-white px-6 py-3 rounded-lg text-lg font-semibold transition"
-              >
-                Place Order
-              </button>
+
+              {role !== "admin" &&
+                role !== "seller" &&
+                (method === "cod" ? (
+                  <button
+                    onClick={handleCheckout}
+                    className="w-full bg-[#FF4B2B] hover:bg-[#e95b2e] text-white px-6 py-3 rounded-lg text-lg font-semibold transition"
+                  >
+                    Place Order
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCheckout}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold transition"
+                  >
+                    Pay ৳ {cartTotal.toFixed(2)}
+                  </button>
+                ))}
             </div>
           </div>
         </div>

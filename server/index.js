@@ -589,6 +589,226 @@ app.delete("/menu/:id", verifyToken, async (req, res) => {
   res.json({ success: true, message: "Menu item deleted successfully." });
 });
 
+// cod order save in the db
+app.post("/api/order", async (req, res) => {
+  const {
+    user_email,
+    user_name,
+    user_phone,
+    user_address,
+    cart,
+    total,
+    paymentMethod,
+  } = req.body;
+
+  // Validation
+  if (
+    !user_email ||
+    !user_name ||
+    !user_phone ||
+    !user_address ||
+    !Array.isArray(cart) ||
+    !total ||
+    !paymentMethod
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required fields.",
+    });
+  }
+
+  try {
+    // Prepare order object
+    const orderData = {
+      user_email,
+      user_name,
+      user_phone,
+      user_address,
+      items: cart, // save full cart as JSON
+      total,
+      payment_method: paymentMethod,
+      payment_status: paymentMethod === "cod" ? "pending" : "paid", // SSL will update later
+      order_status: "pending", // can later be updated by seller/admin
+    };
+
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from("orders")
+      .insert([orderData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("❌ Error placing order:", error.message);
+      return res.status(500).json({ success: false, message: error.message });
+    }
+
+    // 🔁 Optional: Update popularity count for each menu item
+    for (const item of cart) {
+      if (item.id) {
+        await supabase.rpc("increment_menu_count", { menu_id_input: item.id });
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Order placed successfully",
+      order: data,
+    });
+  } catch (err) {
+    console.error("🔥 Server error:", err.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+});
+
+// get order data for user
+app.get("/api/orders/user/:email", async (req, res) => {
+  const { email } = req.params;
+
+  console.log("Fetching orders for email:", email);
+
+  try {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("user_email", email)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching orders:", error.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch orders",
+        error: error.message,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      orders: data || [],
+    });
+  } catch (err) {
+    console.error("Server error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
+// get order data for seller
+app.get("/api/orders/seller/:email", async (req, res) => {
+  const { email } = req.params;
+
+  console.log("📦 Fetching orders for seller:", email);
+
+  try {
+    const { data: allOrders, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("❌ Supabase error:", error.message);
+      return res.status(500).json({ success: false, message: error.message });
+    }
+
+    const sellerOrders = allOrders
+      .map((order) => {
+        if (!Array.isArray(order.items)) return null;
+
+        const sellerItems = order.items.filter(
+          (item) => item.ownerEmail === email // 🔥 Corrected here
+        );
+
+        if (sellerItems.length === 0) return null;
+
+        return {
+          ...order,
+          items: sellerItems,
+          total: sellerItems.reduce(
+            (acc, item) => acc + item.price * item.quantity,
+            0
+          ),
+        };
+      })
+      .filter(Boolean);
+
+    console.log("✅ Filtered orders:", sellerOrders);
+
+    res.json({ success: true, orders: sellerOrders });
+  } catch (err) {
+    console.error("🔥 Server error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// order status update /patch
+// Update order status
+app.patch("/api/orders/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    // 1. Fetch current order data
+    const { data: order, error: fetchError } = await supabase
+      .from("orders")
+      .select("payment_method, payment_status, order_status")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      console.error("❌ Fetch error:", fetchError.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch order",
+        error: fetchError.message,
+      });
+    }
+
+    // 2. Prepare updates
+    const updates = {
+      order_status: status,
+    };
+
+    if (
+      status === "delivered" &&
+      order.payment_method === "cod" &&
+      order.payment_status === "pending"
+    ) {
+      updates.payment_status = "paid";
+    }
+
+    // 3. Update the order
+    const { error: updateError } = await supabase
+      .from("orders")
+      .update(updates)
+      .eq("id", id);
+
+    if (updateError) {
+      console.error("❌ Update status error:", updateError.message);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update order status",
+        error: updateError.message,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+    });
+  } catch (err) {
+    console.error("🔥 Server error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log(`FoodZone is running on port ${port}`);
 });

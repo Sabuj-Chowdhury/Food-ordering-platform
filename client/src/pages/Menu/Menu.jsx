@@ -53,7 +53,7 @@ const Menu = () => {
 
   const handleAddToCart = (item) => {
     const quantity = quantities[item.id] || 1;
-    addToCart({ ...item, quantity });
+    addToCart({ ...item, quantity, ownerEmail: data.email });
     toast.success(`${item.name} added to cart`);
   };
 
