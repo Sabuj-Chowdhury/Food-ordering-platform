@@ -11,7 +11,7 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { cart } = useContext(CartContext);
-  console.log(cart);
+  // console.log(cart);
   const totalCartQty = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   const onLogout = async () => {

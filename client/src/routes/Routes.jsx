@@ -25,6 +25,9 @@ import Menu from "../pages/Menu/Menu";
 import Checkout from "../pages/Checkout/Checkout";
 import MyOrders from "../pages/Users/MyOrders/MyOrders";
 import PaymentHistory from "../pages/Users/Payments/PaymentHistory";
+import PaymentSuccess from "../pages/Payments/PaymentSuccess";
+import PaymentFail from "../pages/Payments/PaymentFail";
+import PaymentCancel from "../pages/Payments/PaymentCancel";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +57,18 @@ const router = createBrowserRouter([
       {
         path: "/checkout",
         element: <Checkout />,
+      },
+      {
+        path: "/payment/success",
+        element: <PaymentSuccess />,
+      },
+      {
+        path: "/payment/fail",
+        element: <PaymentFail />,
+      },
+      {
+        path: "/payment/cancel",
+        element: <PaymentCancel />,
       },
     ],
   },

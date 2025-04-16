@@ -1,11 +1,19 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
+const qs = require("querystring");
 const morgan = require("morgan");
 const jwt = require("jsonwebtoken");
 const { createClient } = require("@supabase/supabase-js");
 const app = express();
 const port = process.env.PORT || 5000;
+
+// ENV Variables
+const BASE_URL = process.env.BASE_URL;
+const CLIENT_URL = process.env.CLIENT_URL;
+const SSL_STORE_ID = process.env.SSL_STORE_ID;
+const SSL_STORE_PASSWORD = process.env.SSL_STORE_PASSWORD;
 
 // Initialize Supabase client
 const supabase = createClient(
@@ -17,6 +25,7 @@ const supabase = createClient(
 app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(express.urlencoded({ extended: true })); // ✅ Needed for form-urlencoded bodies
 
 // token verify middleware
 const verifyToken = (req, res, next) => {
@@ -26,7 +35,7 @@ const verifyToken = (req, res, next) => {
   }
 
   const token = authHeader.split(" ")[1];
-  console.log("Token received:", token);
+  // console.log("Token received:", token);
 
   jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
     if (err) {
@@ -42,7 +51,7 @@ const verifyToken = (req, res, next) => {
 app.post("/jwt", async (req, res) => {
   try {
     const user = req.body;
-    console.log("Generating token for:", user);
+    // console.log("Generating token for:", user);
     const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
       expiresIn: "24h",
     });
@@ -55,10 +64,6 @@ app.post("/jwt", async (req, res) => {
       error: error.message,
     });
   }
-});
-
-app.get("/", (req, res) => {
-  res.send("Hello from FoodZone Server..");
 });
 
 // admin verify middleware
@@ -90,7 +95,6 @@ const verifyAdmin = async (req, res, next) => {
 app.post("/users", async (req, res) => {
   try {
     const userData = req.body;
-    // console.log("Received user data:", userData); // Add this debug log
 
     // Check if user already exists
     const { data: existingUser } = await supabase
@@ -123,7 +127,7 @@ app.post("/users", async (req, res) => {
       .single();
 
     if (error) {
-      console.error("Supabase insertion error:", error); // Add detailed error logging
+      // console.error("Supabase insertion error:", error); // Add detailed error logging
       throw error;
     }
 
@@ -133,7 +137,7 @@ app.post("/users", async (req, res) => {
       data,
     });
   } catch (error) {
-    console.error("Error creating user:", error);
+    // console.error("Error creating user:", error);
     res.status(500).json({
       message: "Error creating user",
       error: error.message,
@@ -204,13 +208,13 @@ app.get("/users/:email", verifyToken, async (req, res) => {
       });
     }
 
-    console.log("Found user data:", data); // Debug log
+    // console.log("Found user data:", data); // Debug log
     res.status(200).json({
       success: true,
       user: data,
     });
   } catch (error) {
-    console.error("Server error:", error);
+    // console.error("Server error:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching user data",
@@ -807,6 +811,261 @@ app.patch("/api/orders/:id/status", async (req, res) => {
       error: err.message,
     });
   }
+});
+
+// SSL payment
+
+app.post("/api/ssl-payment", async (req, res) => {
+  const {
+    user_email,
+    user_name,
+    user_phone,
+    user_address,
+    cart,
+    total,
+    paymentMethod,
+  } = req.body;
+  console.log("📦 Store ID:", process.env.SSL_STORE_ID);
+  console.log("📦 Store Pass:", process.env.SSL_STORE_PASSWORD);
+
+  if (
+    !user_email ||
+    !user_name ||
+    !user_phone ||
+    !user_address ||
+    !cart ||
+    !total
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
+  }
+
+  const transactionId = "TXN_" + new Date().getTime();
+
+  const data = {
+    store_id: process.env.SSL_STORE_ID,
+    store_passwd: process.env.SSL_STORE_PASSWORD,
+    total_amount: total,
+    currency: "BDT",
+    tran_id: transactionId,
+    success_url: `${process.env.BASE_URL}/api/ssl-payment/success`,
+    fail_url: `${process.env.BASE_URL}/api/ssl-payment/fail`,
+    cancel_url: `${process.env.BASE_URL}/api/ssl-payment/cancel`,
+    cus_name: user_name,
+    cus_email: user_email,
+    cus_phone: user_phone,
+    cus_add1: user_address,
+    cus_city: "Dhaka",
+    cus_country: "Bangladesh",
+    shipping_method: "NO",
+    product_name: "FoodZone Order",
+    product_category: "Food",
+    product_profile: "general",
+  };
+
+  try {
+    console.log("🔄 Sending to SSLCommerz...");
+    const sslRes = await axios.post(
+      "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
+      qs.stringify(data),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    if (sslRes.data?.GatewayPageURL) {
+      console.log("✅ Gateway URL received:", sslRes.data.GatewayPageURL);
+
+      // log before insert
+      console.log("📦 Inserting order:", { transactionId, user_email });
+
+      const { error } = await supabase.from("orders").insert([
+        {
+          user_email,
+          user_name,
+          user_phone,
+          user_address,
+          items: cart,
+          total,
+          payment_method: "ssl",
+          payment_status: "pending",
+          order_status: "pending",
+          transaction_id: transactionId,
+        },
+      ]);
+
+      if (error) throw error;
+
+      res.status(200).json({ gateway_url: sslRes.data.GatewayPageURL });
+    } else {
+      console.error("❌ No gateway URL:", sslRes.data);
+      res.status(500).json({ message: "Failed to initiate payment" });
+    }
+  } catch (err) {
+    console.error("❌ SSL Payment Error:", err); // full error
+    res.status(500).json({ message: "Payment initiation failed" });
+  }
+});
+
+// ----------------------
+// ✅ SSL INITIATION
+// ----------------------
+app.post("/api/ssl-payment", async (req, res) => {
+  const { user_email, user_name, user_phone, user_address, cart, total } =
+    req.body;
+
+  if (
+    !user_email ||
+    !user_name ||
+    !user_phone ||
+    !user_address ||
+    !cart ||
+    !total
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Missing required fields" });
+  }
+
+  const transactionId = "TXN_" + Date.now();
+
+  const payload = {
+    store_id: SSL_STORE_ID,
+    store_passwd: SSL_STORE_PASSWORD,
+    total_amount: total,
+    currency: "BDT",
+    tran_id: transactionId,
+    success_url: `${BASE_URL}/api/ssl-payment/success`,
+    fail_url: `${BASE_URL}/api/ssl-payment/fail`,
+    cancel_url: `${BASE_URL}/api/ssl-payment/cancel`,
+    cus_name: user_name,
+    cus_email: user_email,
+    cus_phone: user_phone,
+    cus_add1: user_address,
+    cus_city: "Dhaka",
+    cus_country: "Bangladesh",
+    shipping_method: "NO",
+    product_name: "FoodZone Order",
+    product_category: "Food",
+    product_profile: "general",
+  };
+
+  try {
+    console.log("🔄 Sending to SSLCommerz...");
+    const sslRes = await axios.post(
+      "https://sandbox.sslcommerz.com/gwprocess/v4/api.php",
+      qs.stringify(payload),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    if (sslRes.data?.GatewayPageURL) {
+      console.log("✅ Gateway URL received:", sslRes.data.GatewayPageURL);
+
+      const { error } = await supabase.from("orders").insert([
+        {
+          user_email,
+          user_name,
+          user_phone,
+          user_address,
+          items: cart,
+          total,
+          payment_method: "ssl",
+          payment_status: "pending",
+          order_status: "pending",
+          transaction_id: transactionId,
+        },
+      ]);
+
+      if (error) throw error;
+
+      return res.status(200).json({ gateway_url: sslRes.data.GatewayPageURL });
+    } else {
+      console.error("❌ No gateway URL:", sslRes.data);
+      return res.status(500).json({ message: "Failed to initiate payment" });
+    }
+  } catch (err) {
+    console.error("❌ SSL Payment Error:", err);
+    return res.status(500).json({ message: "Payment initiation failed" });
+  }
+});
+
+// ----------------------
+// ✅ SUCCESS HANDLER
+// ----------------------
+app.post("/api/ssl-payment/success", async (req, res) => {
+  const { tran_id } = req.body; // ✅ SSLCommerz sends tran_id in body
+  console.log("✅ POST /success with tran_id:", tran_id);
+
+  if (!tran_id) {
+    console.error("❌ No tran_id in body");
+    return res.redirect(`${CLIENT_URL}/payment/fail`);
+  }
+
+  try {
+    await supabase
+      .from("orders")
+      .update({ payment_status: "paid", order_status: "pending" })
+      .eq("transaction_id", tran_id);
+
+    console.log("✅ Payment updated for:", tran_id);
+    return res.redirect(`${CLIENT_URL}/payment/success`);
+  } catch (err) {
+    console.error("❌ DB Update Failed:", err);
+    return res.redirect(`${CLIENT_URL}/payment/fail`);
+  }
+});
+
+// GET route: for redirecting users to success page
+app.get("/api/ssl-payment/success", async (req, res) => {
+  const tran_id = req.query.tran_id;
+  if (!tran_id) {
+    return res.redirect(`${CLIENT_URL}/payment/fail`);
+  }
+
+  return res.redirect(`${CLIENT_URL}/payment/success`);
+});
+
+// ----------------------
+// ❌ FAIL HANDLER
+// ----------------------
+app.post("/api/ssl-payment/fail", async (req, res) => {
+  const { tran_id } = req.body;
+
+  try {
+    await supabase.from("orders").delete().eq("transaction_id", tran_id);
+    return res.redirect(`${CLIENT_URL}/payment/fail`);
+  } catch (err) {
+    return res.redirect(`${CLIENT_URL}/payment/fail`);
+  }
+});
+
+// ----------------------
+// 🚫 CANCEL HANDLER
+// ----------------------
+app.post("/api/ssl-payment/cancel", async (req, res) => {
+  const { tran_id } = req.body;
+
+  try {
+    await supabase
+      .from("orders")
+      .update({ order_status: "cancelled" })
+      .eq("transaction_id", tran_id);
+
+    return res.redirect(`${CLIENT_URL}/payment/cancel`);
+  } catch (err) {
+    return res.redirect(`${CLIENT_URL}/payment/cancel`);
+  }
+});
+
+app.get("/", (req, res) => {
+  res.send("Hello from FoodZone Server..");
 });
 
 app.listen(port, () => {
